@@ -1,40 +1,52 @@
 pipeline {
     agent any
     
+
+    environment {
+        APP_NAME    = 'MyPythonApp'
+        APP_VERSION = '1.2.0'
+    }
+    
     parameters {
-        choice(
-            name: 'ENVIRONMENT', 
-            choices: ['dev', 'staging', 'prod'], 
-            description: 'Select the target environment for deployment'
+        
+        booleanParam(
+            name: 'SEND_EMAIL', 
+            defaultValue: true, 
+            description: 'Check this box to send an email notification upon build completion'
         )
     }
     
     stages {
         stage('Checkout') {
             steps {
-                echo 'Fetching codebase...'
-                // The SCM checkout happens automatically via the multibranch/pipeline setup
+                echo 'Fetching codebase from repository...'
             }
         }
         
         stage('Build') {
             steps {
-                echo 'Running compilation check on app.py...'
-                // Changed from 'sh' to 'bat' for Windows compatibility
+               
+                echo "Building application: ${env.APP_NAME} v${env.APP_VERSION}"
                 bat 'python -m py_compile app.py'
             }
         }
         
-        stage('Deploy') {
+        stage('Send Notification') {
+           
+            when {
+                expression { return params.SEND_EMAIL == true }
+            }
             steps {
-                // Pause and ask for manual intervention mid-flight
-                input id: 'DeployApproval', 
-                      message: "Approve deployment to ${params.ENVIRONMENT}?", 
-                      ok: 'Go'
+            
+                echo "Sending Email Notification..."
+                echo "Subject: [Deployment] ${env.APP_NAME} - Version ${env.APP_VERSION} status"
+                echo "Body: The pipeline has completed successfully."
                 
-                echo "Deploying to ${params.ENVIRONMENT} environment..."
-                // Changed from 'sh' to 'bat' for Windows compatibility
-                bat 'python app.py'
+               
+                mail to: 'elamparithi.ta2024@vitstudent.ac.in',
+                     subject: "[Deployment] ${env.APP_NAME} - Version ${env.APP_VERSION} status",
+                     body: "The pipeline has completed successfully."
+                */
             }
         }
     }

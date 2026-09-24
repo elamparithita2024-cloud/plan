@@ -1,38 +1,40 @@
 pipeline {
     agent any
-
+    
     parameters {
         choice(
             name: 'ENVIRONMENT', 
             choices: ['dev', 'staging', 'prod'], 
-            description: 'Select the target deployment environment'
+            description: 'Select the target environment for deployment'
         )
     }
-
+    
     stages {
         stage('Checkout') {
             steps {
-                echo "Fetching codebase..."
-           
-                sh 'echo "print(\'Hello from app.py!\')" > app.py'
+                echo 'Fetching codebase...'
+                // The SCM checkout happens automatically via the multibranch/pipeline setup
             }
         }
-
+        
         stage('Build') {
             steps {
-                echo "Performing compile check on app.py..."
-              
-                sh 'python3 -m py_compile app.py'
+                echo 'Running compilation check on app.py...'
+                // Changed from 'sh' to 'bat' for Windows compatibility
+                bat 'python -m py_compile app.py'
             }
         }
-
+        
         stage('Deploy') {
             steps {
-                // Pause pipeline and prompt user for intervention
-                input message: "Approve deployment to ${params.ENVIRONMENT}?", ok: "Go"
+                // Pause and ask for manual intervention mid-flight
+                input id: 'DeployApproval', 
+                      message: "Approve deployment to ${params.ENVIRONMENT}?", 
+                      ok: 'Go'
                 
                 echo "Deploying to ${params.ENVIRONMENT} environment..."
-                sh 'python3 app.py'
+                // Changed from 'sh' to 'bat' for Windows compatibility
+                bat 'python app.py'
             }
         }
     }
